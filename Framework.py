@@ -77,9 +77,9 @@ def start_game(strategy):
 
     engine = rule.Rule()
 
-    visionPlugin = rule.VisionPlugin("224.5.23.2", 10020, "VisionPlugin");
-    refereePlugin = rule.RefereePlugin("224.5.23.1", 10003, "RefereePlugin");
-    navigatorPlugin = rule.UDPNavigatorPlugin(20011, "127.0.0.1", "UDPNavigatorPlugin");
+    visionPlugin = rule.VisionPlugin("224.5.23.2", 10020, "VisionPlugin")
+    refereePlugin = rule.RefereePlugin("224.5.23.1", 10003, "RefereePlugin")
+    navigatorPlugin = rule.SerialNavigatorPlugin("/dev/ttyUSB0", 115200, "SerialNavigatorPlugin")
     engine.install_plugin(visionPlugin)
     engine.install_plugin(refereePlugin)
     engine.install_plugin(navigatorPlugin)
