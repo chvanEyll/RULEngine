@@ -11,8 +11,8 @@ def create_teams():
     blue_players = []
     yellow_players = []
     for i in range(PLAYER_PER_TEAM):
-        bPlayer = Player(i)
-        yPlayer = Player(i)
+        bPlayer = Player(i, False)
+        yPlayer = Player(i, True)
         blue_players.append(bPlayer)
         yellow_players.append(yPlayer)
     blue_team = Team(blue_players, False)

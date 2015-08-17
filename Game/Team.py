@@ -1,4 +1,4 @@
-class Team():
+class Team(object):
     def __init__(self, players, is_team_yellow):
         self.players = players
         self.is_team_yellow = is_team_yellow

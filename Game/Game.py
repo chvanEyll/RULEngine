@@ -1,12 +1,10 @@
 import math
 
 from . import Referee
-from ..Util.Pose import Pose
-from ..Util.Position import Position
-from ..Util.constant import PLAYER_PER_TEAM
+from ..Util.Pose import Pose, Position
 
 
-class Game():
+class Game(object):
     def __init__(self, field, referee, blue_team, yellow_team, blue_team_strategy):
         self.field = field
         self.referee = referee
@@ -41,8 +39,9 @@ class Game():
     def _remove_commands_from_opponent_team(commands, opponent_team):
         final_commands = []
         for command in commands:
-            if command.team != opponent_team:
-                final_commands.append(command)
+            # if command.team != opponent_team:
+            #     final_commands.append(command)
+            final_commands.append(command)
         return final_commands
 
     def update_game_state(self, referee_command):
@@ -72,7 +71,8 @@ class Game():
         self._update_players_of_team(blue_team.robots, self.blue_team)
         self._update_players_of_team(yellow_team.robots, self.yellow_team)
 
-    def _update_players_of_team(self, players, team):
+    @staticmethod
+    def _update_players_of_team(players, team):
         for player in players:
             player_position = Position(player.pose.coord.x, player.pose.coord.y, player.pose.coord.z)
             player_orientation = (player.pose.orientation * 180) / math.pi

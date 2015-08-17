@@ -6,10 +6,17 @@ class Pose(object):
     def __init__(self, position=Position(), orientation=0.0):
         assert(isinstance(position, Position)), 'position should be Position object.'
         assert(isinstance(orientation, (int, float))), 'orientation should be int or float value.'
-        assert(0 <= orientation <= 360), 'orientation should be between 0 and 360 degrees'
+#        assert(0 <= orientation <= 360), 'orientation should be between 0 and 360 degrees'
 
         self.position = position
         self.orientation = orientation
 
     def __str__(self):
         return '[{}, theta={}]'.format(self.position, self.orientation)
+
+    def __eq__(self, other):
+        assert(isinstance(other, Pose)), 'eq operator should be Pose object.'
+        return self.orientation == other.orientation and self.position == other.position
+
+    def copy(self):
+        return Pose(self.position.copy(), self.orientation)
