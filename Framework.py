@@ -1,7 +1,7 @@
 import sys
 import os.path
 path, file = os.path.split(os.path.realpath(__file__))
-#print (os.path.join(path, "Communication"))
+print (os.path.join(path, "Communication"))
 sys.path.append(os.path.join(path, "Communication"))
 from .Game.Ball import Ball
 from .Game.Field import Field
@@ -17,17 +17,7 @@ from .Communication.udp_command_sender import UDPCommandSender
 import math
 import time
 from collections import deque
-
-#Gui imports are optional
-try:
-    from PyQt4 import QtGui, QtCore
-    qt_installed = True
-except ImportError:
-    qt_installed = False
-
-if qt_installed:
-    from .Gui.VSSL import FieldDisplay
-
+import threading
 
 def convertPositionToSpeed(player, x, y, theta):
     current_theta = player.pose.orientation
@@ -39,8 +29,13 @@ def convertPositionToSpeed(player, x, y, theta):
     elif theta_direction <= -math.pi:
         theta_direction += 2*math.pi
 
-    theta_speed = 2 if abs(theta_direction) > 0.2 else 0.4
-    new_theta = theta_speed if theta_direction > 0 else -theta_speed
+    if (theta_direction == 0):
+        theta_speed = 0
+    elif (abs(theta_direction) > 0.2):
+        theta_speed = 2
+    elif(abs(theta_direction) <= 0.2 and abs(theta_direction) > 0):
+        theta_speed = 0.4
+    new_theta = theta_speed if theta_direction >= 0 else -theta_speed
 
     direction_x = x - current_x
     direction_y = y - current_y
@@ -50,116 +45,143 @@ def convertPositionToSpeed(player, x, y, theta):
         direction_x /= norm
         direction_y /= norm
     angle = math.atan2(direction_y, direction_x)
-    cosangle = math.cos(math.radians(-current_theta))
-    sinangle = math.sin(math.radians(-current_theta))
+    cosangle = math.cos(-current_theta)
+    sinangle = math.sin(-current_theta)
     new_x = (direction_x * cosangle - direction_y * sinangle) * speed
     new_y = (direction_y * cosangle + direction_x * sinangle) * speed
 
     return new_x, new_y, new_theta
 
 
-def create_teams():
-    blue_players = []
-    yellow_players = []
-    for i in range(PLAYER_PER_TEAM):
-        bPlayer = Player(i)
-        yPlayer = Player(i)
-        blue_players.append(bPlayer)
-        yellow_players.append(yPlayer)
-    blue_team = Team(blue_players, False)
-    yellow_team = Team(yellow_players, True)
-    return blue_team, yellow_team
+class Framework(object):
+
+    def create_teams(self):
+        blue_players = []
+        yellow_players = []
+        for i in range(PLAYER_PER_TEAM):
+            bPlayer = Player(i)
+            yPlayer = Player(i)
+            blue_players.append(bPlayer)
+            yellow_players.append(yPlayer)
+        blue_team = Team(blue_players, False)
+        yellow_team = Team(yellow_players, True)
+        return blue_team, yellow_team
 
 
-def create_ball():
-    ball = Ball()
-    return ball
+    def create_ball(self):
+        ball = Ball()
+        return ball
 
 
-def create_field():
-    ball = create_ball()
-    field = Field(ball)
-    return field
+    def create_field(self):
+        ball = self.create_ball()
+        self.field = Field(ball)
+        return self.field
 
 
-def create_referee():
-    referee = Referee()
-    return referee
+    def create_referee(self):
+        self.referee = Referee()
+        return self.referee
 
 
-def create_game(strategy):
-    blue_team, yellow_team = create_teams()
-    field = create_field()
-    referee = create_referee()
-    blue_team_strategy = strategy(field, referee, blue_team, yellow_team)
-    # yellow_team_strategy = WorstStrategy(field, referee, yellow_team, blue_team)
+    def create_game(self, strategy):
+        blue_team, yellow_team = self.create_teams()
+        self.create_field()
+        self.referee = self.create_referee()
+        if (self.is_yellow):
+            self.strategy = strategy(self.field, self.referee, yellow_team, blue_team, True)
+        else:
+            self.strategy = strategy(self.field, self.referee, blue_team, yellow_team)
 
-    game = Game(field, referee, blue_team, yellow_team, blue_team_strategy)
+        self.game = Game(self.field, self.referee, blue_team, yellow_team, self.strategy)
 
-    return game
-
-
-def update_game_state(game, engine):
-    referee_commands = engine.grab_referee_commands()
-    if referee_commands:
-        referee_command = referee_commands[0]
-        game.update_game_state(referee_command)
+        return self.game
 
 
-def update_players_and_ball(game, vision):
-    vision_frame = vision.get_latest_frame()
-    if vision_frame:
-        game.update_players_and_ball(vision_frame)
+    def update_game_state(self):
+        referee_commands = self.engine.grab_referee_commands()
+        if referee_commands:
+            referee_command = referee_commands[0]
+            self.game.update_game_state(referee_command)
 
 
-def update_strategies(game):
-    game.update_strategies()
+    def update_players_and_ball(self):
+        vision_frame = self.vision.get_latest_frame()
+        if vision_frame:
+            self.game.update_players_and_ball(vision_frame)
 
 
-def send_robot_commands(game, vision, command_sender):
-    vision_frame = vision.get_latest_frame()
-    if vision_frame:
-        commands = game.get_commands()
-        for command in commands:
-            robot = vision_frame.detection.robots_blue[command.player.id]
-            fake_player = Player(0)
-            fake_player.pose = Pose(Position(robot.x, robot.y), math.degrees(robot.orientation))
-            command.pose.position.x, command.pose.position.y, command.pose.orientation = convertPositionToSpeed(fake_player, command.pose.position.x, command.pose.position.y, command.pose.orientation)
+    def update_strategies(self):
+        self.game.update_strategies()
 
-            command_sender.send_command(command)
 
-def start_game(strategy, gui=False):
+    def send_robot_commands(self):
+        vision_frame = self.vision.get_latest_frame()
+        if vision_frame:
+            commands = self.game.get_commands()
+            for command in commands:
+                if command.team.is_team_yellow:
+                    robot = vision_frame.detection.robots_yellow[command.player.id]
+                else:
+                    robot = vision_frame.detection.robots_blue[command.player.id]
 
-    #refereePlugin = rule.RefereePlugin("224.5.23.1", 10003, "RefereePlugin")
-    vision = Vision()
-    command_sender = UDPCommandSender("127.0.0.1", 20011)
+                if not command.is_speed_command:
+                    fake_player = Player(0)
+                    fake_player.pose = Pose(Position(robot.x, robot.y), robot.orientation)
+                    command.pose.position.x, command.pose.position.y, command.pose.orientation = convertPositionToSpeed(fake_player, command.pose.position.x, command.pose.position.y, command.pose.orientation)
 
-    game = create_game(strategy)
+                self.command_sender.send_command(command)
 
-    times = deque(maxlen=10)
+    def __init__(self, is_team_yellow=False):
+        self.running_thread = None
+        self.thread_terminate = threading.Event()
+        self.is_yellow = is_team_yellow
 
-    last_time = time.time()
+    def start_game(self, strategy, async=False):
+        #refereePlugin = rule.RefereePlugin("224.5.23.1", 10003, "RefereePlugin")
 
-    def main_loop():
-        #update_game_state(game, engine)
-        update_players_and_ball(game, vision)
-        update_strategies(game)
-        send_robot_commands(game, vision, command_sender)
+        if not self.running_thread:
+            self.vision = Vision()
+            self.command_sender = UDPCommandSender("127.0.0.1", 20011)
+        else:
+            self.stop_game()
 
-    if gui:
-        if not qt_installed:
-            sys.exit("PyQt4 is not installed")
+        self.create_game(strategy)
 
-        main_loop()
-        app = QtGui.QApplication(sys.argv)
-        ex = FieldDisplay(main_loop, game, command_sender)
-        sys.exit(app.exec_())
-    else:
-        while True:  # TODO: Replace with a loop that will stop when the game is over
-            main_loop()
+        self.running_thread = threading.Thread(target=self.game_thread)
+        self.running_thread.start()
+
+        if not async:
+            self.running_thread.join()
+
+    def game_thread(self):
+
+        times = deque(maxlen=10)
+        last_time = time.time()
+
+        #Wait for first frame
+        while not self.vision.get_latest_frame():
+            time.sleep(0.01)
+
+        while not self.thread_terminate.is_set():  # TODO: Replace with a loop that will stop when the game is over
+            #update_game_state(game, engine)
+            self.update_players_and_ball()
+            self.update_strategies()
+            self.send_robot_commands()
             #time.sleep(0.01)
             new_time = time.time()
             times.append(new_time - last_time)
-            print(len(times) / sum(times))
+            #print(len(times) / sum(times))
             last_time = new_time
+
+    def stop_game(self):
+
+        self.thread_terminate.set()
+        self.running_thread.join()
+        self.thread_terminate.clear()
+
+
+
+
+
 
