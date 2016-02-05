@@ -14,10 +14,12 @@ from .Util.Position import Position
 from .Util.constant import PLAYER_PER_TEAM
 from .Communication.vision import Vision
 from .Communication.udp_command_sender import UDPCommandSender
+from .Gui.VSSL import FieldDisplay
 import math
 import time
 from collections import deque
 import threading
+from PyQt4 import QtGui
 
 def convertPositionToSpeed(player, x, y, theta):
     current_theta = player.pose.orientation
@@ -151,11 +153,14 @@ class Framework(object):
         self.running_thread = threading.Thread(target=self.game_thread)
         self.running_thread.start()
 
+        app = QtGui.QApplication(sys.argv)
+        ex = FieldDisplay(self.game, self.command_sender)
+        sys.exit(app.exec_())
+        
         if not async:
             self.running_thread.join()
 
     def game_thread(self):
-
         times = deque(maxlen=10)
         last_time = time.time()
 
