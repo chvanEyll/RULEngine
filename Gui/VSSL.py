@@ -28,6 +28,8 @@ class FieldDisplay(QtGui.QWidget):
         self.command_sender = command_sender
 
         self.debugMode = True
+        self.showNumbers = True
+        self.showCircles = True
         #0 means no selection.
         #Range: 0 to 6.
         self.selectedBlue = 0
@@ -160,6 +162,12 @@ class FieldDisplay(QtGui.QWidget):
         if e.key() == QtCore.Qt.Key_D:
             self.debugMode = not self.debugMode
             print ("DebugMode: {}".format(self.debugMode))
+        elif e.key() == QtCore.Qt.Key_S:
+            self.showNumbers = not self.showNumbers
+            print ("showNumbers: {}".format(self.showNumbers))
+        elif e.key() == QtCore.Qt.Key_C:
+            self.showCircles = not self.showCircles
+            print ("showCircles: {}".format(self.showCircles))
         elif e.key() == QtCore.Qt.Key_1:
             self.selectedYellow = 1
             self.selectedBlue = 0
@@ -211,7 +219,7 @@ class FieldDisplay(QtGui.QWidget):
         else:
             self.selectedYellow = 0
             self.selectedBlue = 0
-            print ("Cleat selected bot")
+            print ("Clear selected bot")
         pass
 
     def paintEvent(self, e):
@@ -302,8 +310,10 @@ class FieldDisplay(QtGui.QWidget):
             qp.setPen(self.whitePen)
         else:
             qp.setPen(self.blackPen)
-        qp.setBrush(QtGui.QColor(r, g, b, 70))
-        qp.drawEllipse(centerX - robotSize, centerY - robotSize, robotSize * 2, robotSize * 2)
+        
+        if self.showCircles:
+            qp.setBrush(QtGui.QColor(r, g, b, 70))
+            qp.drawEllipse(centerX - robotSize, centerY - robotSize, robotSize * 2, robotSize * 2)
         qp.setPen(self.blackPen)
         qp.setBrush(QtGui.QColor(r, g, b, 200))
         qp.drawEllipse(centerX - robotSize / 2, centerY - robotSize / 2, robotSize, robotSize)
@@ -315,11 +325,12 @@ class FieldDisplay(QtGui.QWidget):
         labelX = centerX - labelWidth / 2
         labelY = centerY + labelHeight / 2
 
-        qp.setBrush(QtGui.QColor(0, 0, 0, 150))
-        qp.drawRect(labelX, labelY, labelWidth, -labelHeight)
+        if self.showNumbers:
+            qp.setBrush(QtGui.QColor(0, 0, 0, 150))
+            qp.drawRect(labelX, labelY, labelWidth, -labelHeight)
 
-        qp.setPen(self.whitePen)
-        qp.drawText(QtCore.QPointF(labelX, labelY), indexLabel)
+            qp.setPen(self.whitePen)
+            qp.drawText(QtCore.QPointF(labelX, labelY), indexLabel)
         index += 1
 
         qp.setPen(self.blackPen)
