@@ -1,28 +1,29 @@
 import sys, math
 from PyQt4 import QtGui, QtCore
 
-class MainLoop(QtCore.QThread):
-    updateField = QtCore.pyqtSignal()
+class DrawHandler():
+    def __init__(self):
+        self.pointList = []
+        self.circleList = []
+    
+    def clear(self):
+        self.pointList.clear()
+        self.circleList.clear()
 
-    def __init__(self, target):
-        super(MainLoop, self).__init__()
-        self.target = target
-
-    def run(self):
-        run_loop = self.target
-        emit_signal = self.updateField.emit
-        while True:  # TODO: Replace with a loop that will stop when the game is over
-            run_loop()
-            emit_signal()
-
+    def addPoint(self, x, y):
+        print ("Point {}, {} was added!".format(x, y))
+        self.pointList.append({'x': x, 'y': y});
+        
 class FieldDisplay(QtGui.QWidget):
     #TODO: Make the gui be based on the current window size.
 
-    def __init__(self, game, command_sender):
+    def __init__(self, game, command_sender, stop_game, drawHandler):
         super(FieldDisplay, self).__init__()
 
         self.game = game
         self.command_sender = command_sender
+        self.stop_game = stop_game
+        self.drawHandler = drawHandler
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.refresh)
@@ -44,7 +45,7 @@ class FieldDisplay(QtGui.QWidget):
         self.fieldHeight = 6000
 
         self.initUI()
-
+        
     def setRatio(self, ratio):
         self.ratio = ratio
 
@@ -77,6 +78,8 @@ class FieldDisplay(QtGui.QWidget):
     def closeEvent(self, e):
         global playAll
         playAll = False
+        print ("Stopping game.")
+        self.stop_game()
 
     def resizeEvent(self, e):
         print ("Current new size: {}, {}".format(e.size().width(), e.size().height()))
@@ -238,7 +241,19 @@ class FieldDisplay(QtGui.QWidget):
         self.drawRobotTeam(qp, self.game.blue_team, 0, 0, 255, robotSize, False if self.selectedBlue == 0 else True, self.selectedBlue)
 
         self.drawBall(qp, self.game.field.ball)
+        
+        self.drawDebug(qp)
 
+    def drawDebug(self, qp):
+        for i in self.drawHandler.pointList:
+            qp.setPen(self.blackPen)
+            qp.drawLine(self.atRatio(i['x']) - self.atRatio(100), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(100), self.atRatio(i['y']))
+            qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(100), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(100))
+            
+            qp.setPen(self.whitePen)
+            qp.drawLine(self.atRatio(i['x']) - self.atRatio(50), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(50), self.atRatio(i['y']))
+            qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(50), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(50))
+        
     def drawGrass(self, qp):
         if self.debugMode:
             qp.setPen(self.blackPen)
@@ -322,7 +337,7 @@ class FieldDisplay(QtGui.QWidget):
         labelWidth = fm.width(indexLabel)
         labelHeight = fm.height() - 11 #Hard coded for this font.
         labelX = centerX - labelWidth / 2
-        labelY = centerY + labelHeight / 2
+        labelY = -self.atRatio(250) + centerY + labelHeight / 2
 
         if self.showNumbers:
             qp.setBrush(QtGui.QColor(0, 0, 0, 150))
@@ -333,7 +348,7 @@ class FieldDisplay(QtGui.QWidget):
         index += 1
 
         qp.setPen(self.blackPen)
-        self.drawArrowFromRobot(qp, robot, robotSize, -robot.pose.orientation)
+        self.drawLineFromRobot(qp, robot, robotSize, -robot.pose.orientation)
         #qp.setPen(self.grayPenFat)
         #qp.drawLine(x1, y1, x2, y2)
 
@@ -377,17 +392,23 @@ class FieldDisplay(QtGui.QWidget):
 
     def drawLineFromRobot(self, qp, robot, magnitude, angle):
 
-        robotSize = self.atRatio(180)
+        robotOffset = self.atRatio(180 / 2)
+        if self.showCircles:
+            robotOffset = self.atRatio(180)
+
         robotX, robotY = self.getRobotPosition(robot)
-        centerX, centerY = self.getPointFromVec(robotSize, angle, robotX, robotY)
+        centerX, centerY = self.getPointFromVec(robotOffset, angle, robotX, robotY)
 
         self.drawLine(qp, magnitude, angle, centerX, centerY)
 
     def drawArrowFromRobot(self, qp, robot, magnitude, angle):
 
-        robotSize = self.atRatio(180)
+        robotOffset = self.atRatio(180 / 2)
+        if self.showCircles:
+            robotOffset = self.atRatio(180)
+        
         robotX, robotY = self.getRobotPosition(robot)
-        centerX, centerY = self.getPointFromVec(robotSize, angle, robotX, robotY)
+        centerX, centerY = self.getPointFromVec(robotOffset, angle, robotX, robotY)
         self.drawArrow(qp, magnitude, angle, centerX, centerY)
 
     def getPointFromVec(self, magnitude, angle, centerX=0, centerY=0):

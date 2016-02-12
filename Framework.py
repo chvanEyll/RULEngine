@@ -14,7 +14,7 @@ from .Util.Position import Position
 from .Util.constant import PLAYER_PER_TEAM
 from .Communication.vision import Vision
 from .Communication.udp_command_sender import UDPCommandSender
-from .Gui.VSSL import FieldDisplay
+from .Gui.VSSL import FieldDisplay, DrawHandler
 import math
 import time
 from collections import deque
@@ -86,14 +86,14 @@ class Framework(object):
         return self.referee
 
 
-    def create_game(self, strategy):
+    def create_game(self, strategy, drawHandler):
         blue_team, yellow_team = self.create_teams()
         self.create_field()
         self.referee = self.create_referee()
         if (self.is_yellow):
-            self.strategy = strategy(self.field, self.referee, yellow_team, blue_team, True)
+            self.strategy = strategy(self.field, self.referee, yellow_team, blue_team, drawHandler, True)
         else:
-            self.strategy = strategy(self.field, self.referee, blue_team, yellow_team)
+            self.strategy = strategy(self.field, self.referee, blue_team, yellow_team, drawHandler)
 
         self.game = Game(self.field, self.referee, blue_team, yellow_team, self.strategy)
 
@@ -148,13 +148,15 @@ class Framework(object):
         else:
             self.stop_game()
 
-        self.create_game(strategy)
+        drawHandler = DrawHandler()
+            
+        self.create_game(strategy, drawHandler)
 
         self.running_thread = threading.Thread(target=self.game_thread)
         self.running_thread.start()
 
         app = QtGui.QApplication(sys.argv)
-        ex = FieldDisplay(self.game, self.command_sender)
+        ex = FieldDisplay(self.game, self.command_sender, self.stop_game, drawHandler)
         sys.exit(app.exec_())
         
         if not async:
