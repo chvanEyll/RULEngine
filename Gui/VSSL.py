@@ -12,7 +12,10 @@ class DrawHandler():
 
     def addPoint(self, x, y):
         print ("Point {}, {} was added!".format(x, y))
-        self.pointList.append({'x': x, 'y': y});
+        self.pointList.append({'x': x, 'y': y})
+    def addCircle(self, x, y, size):
+        print ("Circle {}, {} size {} was added!".format(x, y, size))
+        self.circleList.append({'x': x, 'y':y, 'size':size})
         
 class FieldDisplay(QtGui.QWidget):
     #TODO: Make the gui be based on the current window size.
@@ -32,6 +35,7 @@ class FieldDisplay(QtGui.QWidget):
         self.debugMode = True
         self.showNumbers = True
         self.showCircles = True
+        self.Key_Z = False
         #0 means no selection.
         #Range: 0 to 6.
         self.selectedBlue = 0
@@ -123,12 +127,12 @@ class FieldDisplay(QtGui.QWidget):
 
             if e.buttons() & QtCore.Qt.LeftButton:
                 self.moveBall(e.x() * self.ratio / 1000 - 10400 / 1000 / 2, -e.y() * self.ratio / 1000 + 7400 / 1000 / 2, 0, 0)
-            if e.buttons() & QtCore.Qt.RightButton:
+            if e.buttons() & QtCore.Qt.RightButton and not self.Key_Z:
                 if self.selectedYellow != 0:
                     self.moveRobot(e.x() * self.ratio / 1000 - 10400 / 1000 / 2, -e.y() * self.ratio / 1000 + 7400 / 1000 / 2, self.game.yellow_team.players[self.selectedYellow - 1].pose.orientation, self.selectedYellow - 1, True)
                 elif self.selectedBlue != 0:
                     self.moveRobot(e.x() * self.ratio / 1000 - 10400 / 1000 / 2, -e.y() * self.ratio / 1000 + 7400 / 1000 / 2, self.game.blue_team.players[self.selectedBlue - 1].pose.orientation, self.selectedBlue - 1, False)
-            if e.buttons() & QtCore.Qt.MiddleButton:
+            if e.buttons() & QtCore.Qt.MiddleButton or (e.buttons() & QtCore.Qt.RightButton and self.Key_Z):
                 print ("Middle")
                 if self.selectedYellow != 0:
                     position = self.game.yellow_team.players[self.selectedYellow-1].pose.position
@@ -218,11 +222,17 @@ class FieldDisplay(QtGui.QWidget):
             self.selectedBlue = 6
             self.selectedYellow = 0
             print ("#6 Blue")
+        elif e.key() == QtCore.Qt.Key_Z:
+            self.Key_Z = True
+            print ("Middle button emulation")
         else:
             self.selectedYellow = 0
             self.selectedBlue = 0
             print ("Clear selected bot")
         pass
+    def keyReleaseEvent(self, e):
+        if e.key() == QtCore.Qt.Key_Z:
+            self.Key_Z = False
 
     def paintEvent(self, e):
         qp = QtGui.QPainter()
@@ -253,6 +263,10 @@ class FieldDisplay(QtGui.QWidget):
             qp.setPen(self.whitePen)
             qp.drawLine(self.atRatio(i['x']) - self.atRatio(50), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(50), self.atRatio(i['y']))
             qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(50), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(50))
+        for i in self.drawHandler.circleList:
+            qp.setPen(self.blackPen)
+            qp.setBrush(QtGui.QColor(255, 0, 0, 100))
+            qp.drawEllipse(self.atRatio(i['x'] - i['size'] / 2), self.atRatio(i['y'] - i['size'] / 2), self.atRatio(i['size']), self.atRatio(i['size']))
         
     def drawGrass(self, qp):
         if self.debugMode:
