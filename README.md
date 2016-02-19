@@ -16,6 +16,7 @@ The S key toggles showing each robot's ID numbers.
 
 The C key toggles showing each robot's debug circle.
 
+The Z key is a middle mouse button emulation. Normally middle clicking allows you to change the orientation of the selected robot, if you don't have a middle key, press Z and right click to emulate a middle mouse button. Simple? Of course!
 
 Left click moves the ball.
 
