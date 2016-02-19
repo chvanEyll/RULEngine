@@ -149,7 +149,7 @@ class Framework(object):
             self.stop_game()
 
         drawHandler = DrawHandler()
-            
+        
         self.create_game(strategy, drawHandler)
 
         self.running_thread = threading.Thread(target=self.game_thread)

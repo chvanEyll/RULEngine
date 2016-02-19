@@ -26,7 +26,9 @@ class FieldDisplay(QtGui.QWidget):
         self.game = game
         self.command_sender = command_sender
         self.stop_game = stop_game
-        self.drawHandler = drawHandler
+
+        self.drawHandlerList = []
+        self.addDrawHandler(drawHandler)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.refresh)
@@ -78,6 +80,9 @@ class FieldDisplay(QtGui.QWidget):
         self.transPen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0), 3, QtCore.Qt.SolidLine)
 
         self.show()
+
+    def addDrawHandler(self, drawHandler):
+        self.drawHandlerList.append(drawHandler)
 
     def closeEvent(self, e):
         global playAll
@@ -255,18 +260,19 @@ class FieldDisplay(QtGui.QWidget):
         self.drawDebug(qp)
 
     def drawDebug(self, qp):
-        for i in self.drawHandler.pointList:
-            qp.setPen(self.blackPen)
-            qp.drawLine(self.atRatio(i['x']) - self.atRatio(100), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(100), self.atRatio(i['y']))
-            qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(100), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(100))
-            
-            qp.setPen(self.whitePen)
-            qp.drawLine(self.atRatio(i['x']) - self.atRatio(50), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(50), self.atRatio(i['y']))
-            qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(50), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(50))
-        for i in self.drawHandler.circleList:
-            qp.setPen(self.blackPen)
-            qp.setBrush(QtGui.QColor(255, 0, 0, 100))
-            qp.drawEllipse(self.atRatio(i['x'] - i['size'] / 2), self.atRatio(i['y'] - i['size'] / 2), self.atRatio(i['size']), self.atRatio(i['size']))
+        for j in self.drawHandlerList:
+            for i in j.pointList:
+                qp.setPen(self.blackPen)
+                qp.drawLine(self.atRatio(i['x']) - self.atRatio(100), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(100), self.atRatio(i['y']))
+                qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(100), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(100))
+                
+                qp.setPen(self.whitePen)
+                qp.drawLine(self.atRatio(i['x']) - self.atRatio(50), self.atRatio(i['y']), self.atRatio(i['x']) + self.atRatio(50), self.atRatio(i['y']))
+                qp.drawLine(self.atRatio(i['x']), self.atRatio(i['y']) - self.atRatio(50), self.atRatio(i['x']), self.atRatio(i['y']) + self.atRatio(50))
+            for i in j.circleList:
+                qp.setPen(self.blackPen)
+                qp.setBrush(QtGui.QColor(255, 0, 0, 100))
+                qp.drawEllipse(self.atRatio(i['x'] - i['size'] / 2), self.atRatio(i['y'] - i['size'] / 2), self.atRatio(i['size']), self.atRatio(i['size']))
         
     def drawGrass(self, qp):
         if self.debugMode:
