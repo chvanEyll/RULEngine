@@ -15,10 +15,9 @@ from .Communication.vision import Vision
 from .Communication.referee import RefereeServer
 from .Communication.udp_command_sender import UDPCommandSender
 from .Command.Command import Stop
-import math
-import time
-from collections import deque
-import threading
+from .Communication.serial_command_sender import SerialCommandSender
+
+dead_zone = 800
 
 def convertPositionToSpeed(player, x, y, theta):
     current_theta = player.pose.orientation
@@ -41,7 +40,7 @@ def convertPositionToSpeed(player, x, y, theta):
     direction_x = x - current_x
     direction_y = y - current_y
     norm = math.hypot(direction_x, direction_y)
-    speed = 1 if norm >= 50 else 0
+    speed = 1 if norm >= dead_zone else 0
     if norm:
         direction_x /= norm
         direction_y /= norm
@@ -182,5 +181,3 @@ class Framework(object):
         except:
             raise
             print("Could not stop players")
-
-
