@@ -15,6 +15,7 @@ from .Util.constant import PLAYER_PER_TEAM
 from .Communication.vision import Vision
 from .Communication.referee import RefereeServer
 from .Communication.udp_command_sender import UDPCommandSender
+from .Communication.ui_debug import UIDebugPacketReceiver
 from .Command.Command import Stop
 import math
 import time
@@ -70,8 +71,8 @@ class Framework(object):
             self.game.update(vision_frame, time_delta)
 
 
-    def update_strategies(self):
-        self.game.update_strategies()
+    def update_strategies(self, debug_info):
+        self.game.update_strategies(debug_info)
 
     def send_robot_commands(self):
         if self.vision.get_latest_frame():
@@ -92,6 +93,7 @@ class Framework(object):
             self.vision = Vision()
             self.referee = RefereeServer()
             self.command_sender = UDPCommandSender("127.0.0.1", 20011)
+            self.ui_debug = UIDebugPacketReceiver("127.0.0.1", 10021)
         else:
             self.stop_game()
 
@@ -116,7 +118,12 @@ class Framework(object):
         while not self.thread_terminate.is_set():  # TODO: Replace with a loop that will stop when the game is over
             self.update_game_state()
             self.update_players_and_ball()
-            self.update_strategies()
+            debug_info = self.ui_debug.pop_frames()
+            if debug_info:
+                debug_info = debug_info[-1]
+            else:
+                debug_info = {}
+            self.update_strategies(debug_info)
             self.send_robot_commands()
             #time.sleep(0.01)
             new_time = time.time()

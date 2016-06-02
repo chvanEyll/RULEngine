@@ -16,16 +16,16 @@ class Game():
         self.blue_team_strategy = blue_team_strategy
         self.delta = None
 
-    def update_strategies(self):
+    def update_strategies(self, debug):
         state = self.referee.command.name
         if state == "HALT":
-            self.blue_team_strategy.on_halt()
+            self.blue_team_strategy.on_halt(debug)
 
         elif state == "NORMAL_START":
-            self.blue_team_strategy.on_start()
+            self.blue_team_strategy.on_start(debug)
 
         elif state == "STOP":
-            self.blue_team_strategy.on_stop()
+            self.blue_team_strategy.on_stop(debug)
 
     def get_commands(self):
         blue_team_commands = [command for command in self._get_blue_team_commands()] #Copy
