@@ -24,7 +24,7 @@ class Position(object):
     def __add__(self, other):
         """ Return self + other """
         if not isinstance(other, (Position, int, float)):
-            return NotImplemented
+            raise NotImplemented
         else:
             new_x = self.x + (other.x if isinstance(other, Position) else other)
             new_y = self.y + (other.y if isinstance(other, Position) else other)

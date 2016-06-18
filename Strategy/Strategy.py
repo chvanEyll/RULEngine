@@ -7,23 +7,26 @@ class Strategy(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, is_team_yellow):
-        self.is_team_yellow = is_team_yellow
+    def __init__(self, field, referee, team, opponent_team):
+        self.field = field
+        self.referee = referee
+        self.team = team
+        self.opponent_team = opponent_team
         self.commands = []
 
     @abstractmethod
-    def on_start(self, game_state):
+    def on_start(self):
         pass
 
     @abstractmethod
-    def on_halt(self, game_state):
+    def on_halt(self):
         pass
 
     @abstractmethod
-    def on_stop(self, game_state):
+    def on_stop(self):
         pass
 
-    def send_command(self, command):
+    def _send_command(self, command):
         self.commands.append(command)
 
     def _get_ball(self):
