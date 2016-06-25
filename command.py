@@ -1,11 +1,10 @@
 #Under MIT License, see LICENSE.txt
 import math
-from ..Util.Pose import Pose, Position
-from ..Game.Player import Player
-from ..Game.Team import Team
-from ..Util.area import *
-from ..Util.geometry import *
-from ..Util.constant import *
+from .util.geometry import Pose, Position
+from .game import Player
+from .util.area import *
+from .util.geometry import *
+from .util.constant import *
 
 
 class _Command(object):

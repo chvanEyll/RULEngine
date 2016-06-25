@@ -12,7 +12,7 @@ from socketserver import BaseRequestHandler
 from .protobuf import grSim_Packet_pb2 as grSim_Packet
 from .udp_utils import udp_socket, MulticastThreadedUDPServer, ThreadedUDPServer
 
-from ..Util.constant import DEBUG_RECEIVE_BUFFER_SIZE
+from ..util.constant import DEBUG_RECEIVE_BUFFER_SIZE
 
 class PBPacketReceiver(object):
     """

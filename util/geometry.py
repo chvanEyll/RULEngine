@@ -1,8 +1,95 @@
-#Under MIT License, see LICENSE.txt
+# Under MIT License, see LICENSE.txt
 import math as m
-from ..Util.Position import Position
-from ..Util.Pose import Pose
 
+__author__ = 'RoboCupULaval'
+
+# TODO: Merge vector and position
+class Position(object):
+    """ Vector with [x, y, z] """
+    def __init__(self, x=0, y=0, z=0):
+        assert(isinstance(x, (int, float))), 'x should be int or float.'
+        assert(isinstance(y, (int, float))), 'y should be int or float.'
+        assert(isinstance(z, (int, float))), 'z should be int or float.'
+
+        self.x = float(x)
+        self.y = float(y)
+        self.z = float(z)
+
+    def copy(self):
+        """
+        copy() -> Position
+
+        Return copy of Position.
+        """
+        return Position(self.x, self.y, self.z)
+
+    # *** OPERATORS ***
+    def __add__(self, other):
+        """ Return self + other """
+        if not isinstance(other, (Position, int, float)):
+            return NotImplemented
+        else:
+            new_x = self.x + (other.x if isinstance(other, Position) else other)
+            new_y = self.y + (other.y if isinstance(other, Position) else other)
+            return Position(new_x, new_y)
+
+    def __sub__(self, other):
+        """ Return self - other """
+        if not isinstance(other, (Position, int, float)):
+            raise NotImplemented
+        else:
+            new_x = self.x - (other.x if isinstance(other, Position) else other)
+            new_y = self.y - (other.y if isinstance(other, Position) else other)
+            return Position(new_x, new_y)
+
+    def __mul__(self, other):
+        """ Return self * other """
+        if not isinstance(other, (int, float)):
+            raise NotImplemented
+        else:
+            new_x = self.x * other
+            new_y = self.y * other
+            return Position(new_x, new_y)
+
+    def __truediv__(self, other):
+        """ Return self / other """
+        if not isinstance(other, (int, float)):
+            raise NotImplemented
+        else:
+            new_x = self.x / other
+            new_y = self.y / other
+            return Position(new_x, new_y)
+
+    def __eq__(self, other):
+        """ Return self == other """
+        assert(isinstance(other, Position)), 'other should be Position.'
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self, other):
+        """ Return self != other """
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        """ Return str(self) """
+        return "(x={}, y={}, z={})".format(self.x, self.y, self.z)
+
+class Pose(object):
+    """  Container of position and orientation """
+    def __init__(self, position=Position(), orientation=0.0):
+        assert(isinstance(position, Position)), 'position should be Position object.'
+        assert(isinstance(orientation, (int, float))), 'orientation should be int or float value.'
+
+        self.position = position
+        self.orientation = orientation
+        if self.orientation >= m.pi:
+            self.orientation -= 2 * m.pi
+        elif self.orientation <= -m.pi:
+            self.orientation += 2*m.pi
+
+    def __str__(self):
+        return '[{}, theta={}]'.format(self.position, self.orientation)
+    def __repr__(self):
+        return self.__str__()
 
 class Vector(object):
     def __init__(self, length=1.0, direction=0.0):
@@ -239,3 +326,87 @@ class Vector(object):
         :return: The smallest angle between the two Vectors, in radians
         """
         return m.fabs(self.direction - vector.direction)
+
+def get_distance(position_1, position_2):
+    """
+    Distance between two positions.
+    :param position_1: Position
+    :param position_2: Position
+    :return: float - distance in millimeter
+    """
+    assert(isinstance(position_1, Position))
+    assert(isinstance(position_2, Position))
+    return m.sqrt((position_2.x - position_1.x) ** 2 + (position_2.y - position_1.y) ** 2)
+
+
+def get_angle(main_position, other):
+    """
+    Angle between position1 and position2 between -pi and pi
+    :param main_position: Position of reference
+    :param other: Position of object
+    :return: float angle between two positions in radians
+    """
+    assert isinstance(main_position, Position), "TypeError main_position"
+    assert isinstance(other, Position), "TypeError other"
+
+    position_x = float(other.x - main_position.x)
+    position_y = float(other.y - main_position.y)
+    return m.atan2(position_y, position_x)
+
+
+def cvt_angle_360(orientation):
+    """
+    Convert radians angle to 0-360 degrees
+    :param orientation: float angle in radians
+    :return: int angle with 0 to 360 range.
+    """
+    assert isinstance(orientation, (int, float)), "TypeError orientation"
+    orientation = m.degrees(orientation)
+
+    if orientation < 0:
+        while True:
+            if orientation >= 0:
+                break
+            else:
+                orientation += 360
+    elif orientation > 359:
+        while True:
+            if orientation < 360:
+                break
+            else:
+                orientation -= 360
+    return int(orientation)
+
+
+def cvt_angle_180(orientation):
+    """
+    Convert radians angle to -180-180 degrees (same as m.degrees())
+    :param orientation: float angle in radians
+    :return: int angle with 180 to -179 range.
+    """
+    assert isinstance(orientation, (int, float)), "TypeError orientation"
+
+    orientation = cvt_angle_360(orientation)
+    if orientation > 180:
+        return orientation-360
+    elif orientation <= -180:
+        return orientation+360
+    else:
+        return int(orientation)
+
+
+def get_nearest(ref_position, list_of_position, number=1):
+    dict_position_distance = {}
+    for bot_position in list_of_position:
+        dst = get_distance(ref_position, bot_position)
+
+        while dst in dict_position_distance.keys():
+            dst += 0.1
+        dict_position_distance[dst] = bot_position
+
+    list_sorted = []
+    for i, bot_dst in enumerate(sorted(dict_position_distance.keys())):
+        if i < number:
+            list_sorted.append(dict_position_distance[bot_dst])
+        else:
+            return list_sorted

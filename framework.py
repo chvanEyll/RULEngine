@@ -11,19 +11,19 @@ from collections import deque, namedtuple
 import threading
 import time
 
-from .Game.Game import Game
-from .Game.Referee import Referee
-from .Communication.vision import Vision
-from .Communication import debug
-from .Communication.referee import RefereeServer
-from .Communication.udp_server import GrSimCommandSender, DebugCommandSender,\
+from .game import Game
+from .communication.vision import Vision
+from .communication import debug
+from .communication.referee import RefereeServer
+from .communication.udp_server import GrSimCommandSender, DebugCommandSender,\
                                       DebugCommandReceiver
-from .Communication.serial_command_sender import SerialCommandSender
-from .Command.Command import Stop
-from .Util.exception import StopPlayerError
+from .communication.serial_command_sender import SerialCommandSender
+from .command import Stop
+from .util.exception import StopPlayerError
 
 GameState = namedtuple('GameState', ['field', 'referee', 'friends',
                                      'enemies', 'debug'])
+
 
 class Framework(object):
     """
@@ -47,7 +47,6 @@ class Framework(object):
         self.last_time = 0
         self.vision = None
 
-
     def create_game(self, strategy):
         """
             Créé l'arbitre et établit la stratégie de l'équipe que l'ia gère.
@@ -56,34 +55,33 @@ class Framework(object):
             :return: Game, le **GameState**
         """
 
-        self.referee = Referee()
-
         self.strategy = strategy()
 
-        self.game = Game(self.referee, self.is_team_yellow)
+        self.game = Game(self.is_team_yellow)
 
         return self.game
-
 
     def update_game_state(self):
         """ Met à jour le **GameState** selon la vision et l'arbitre. """
         # TODO: implémenter correctement la méthode
         pass
-        #referee_command = self.referee.get_latest_frame()
-        #if referee_command:
+        # referee_command = self.referee.get_latest_frame()
+        # if referee_command:
         #    pass
-            #self.game.update_game_state(referee_command)
+            # self.game.update_game_state(referee_command)
 
     def update_players_and_ball(self):
         """ Met à jour le GameState selon la frame de vision obtenue. """
         vision_frame = self.vision.get_latest_frame()
-        if vision_frame and vision_frame.detection.frame_number != self.last_frame:
+        if vision_frame \
+                and vision_frame.detection.frame_number != self.last_frame:
             self.last_frame = vision_frame.detection.frame_number
             this_time = vision_frame.detection.t_capture
             time_delta = this_time - self.last_time
             self.last_time = this_time
-            print("frame: %i, time: %d, delta: %d, FPS: %d" % \
-                    (vision_frame.detection.frame_number, this_time, time_delta, 1/time_delta))
+            debug_info = (vision_frame.detection.frame_number,
+                          this_time, time_delta, 1/time_delta)
+            print("frame: %i, time: %d, delta: %d, FPS: %d" % debug_info)
             self.game.update(vision_frame, time_delta)
 
     def update_strategies(self):
@@ -113,7 +111,6 @@ class Framework(object):
 
     def start_game(self, strategy, async=False, serial=False):
         """ Démarrage du moteur de l'IA initial. """
-
 
         # on peut eventuellement demarrer une autre instance du moteur
         if not self.running_thread:
@@ -186,7 +183,7 @@ class Framework(object):
                                     les joueurs.")
 
     def _send_robot_commands(self):
-        if self.vision.get_latest_frame(): # pourquoi?
+        if self.vision.get_latest_frame():  # pourquoi?
             commands = self._get_coach_commands()
             for command in commands:
                 command = command.toSpeedCommand()
@@ -194,7 +191,6 @@ class Framework(object):
 
     def _get_coach_commands(self):
         return self.strategy.commands
-
 
     def _info_manager(self):
         """ Retourne la référence vers l'InfoManager de l'IA. """

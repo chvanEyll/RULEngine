@@ -1,8 +1,8 @@
 # Under MIT License, see LICENSE.txt
-from ..Util.Position import Position
-from ..Util.geometry import *
+from .geometry import Position
+from .geometry import *
 import math as m
-from ..Util.constant import *
+from .constant import *
 
 __author__ = 'RoboCupULaval'
 

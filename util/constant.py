@@ -1,6 +1,6 @@
 # Under MIT License, see LICENSE.txt
 """ Module définissant des constantes de programmations python pour l'IA """
-from .Position import Position
+from .geometry import Position
 from .debug_type import Color
 __author__ = 'RoboCupULaval'
 
