@@ -1,15 +1,15 @@
-#Under MIT License, see LICENSE.txt
+# Under MIT License, see LICENSE.txt
 import math
-from .util.geometry import Pose, Position
 from .game import Player
-from .util.area import *
-from .util.geometry import *
-from .util.constant import *
+from .util.geometry import Pose, Position
+from .util.area import stayInsideSquare
+from .util.constant import FIELD_Y_TOP, FIELD_Y_BOTTOM, \
+                           FIELD_X_LEFT, FIELD_X_RIGHT
 
 
 class _Command(object):
     def __init__(self, player):
-        assert(isinstance(player, Player))
+        assert isinstance(player, Player)
         self.player = player
         self.dribble = True
         self.dribble_speed = 10
@@ -45,7 +45,7 @@ class _Command(object):
             :param next_pose: the absolute position the robot should go to.
             :returns: A Pose object with speed vectors.
         """
-        #TODO: Cleanup
+        # TODO: Cleanup
         x = next_pose.position.x
         y = next_pose.position.y
         theta = next_pose.orientation
@@ -58,11 +58,11 @@ class _Command(object):
         elif theta_direction <= -math.pi:
             theta_direction += 2*math.pi
 
-        if (theta_direction == 0):
-            theta_speed = 0
-        elif (abs(theta_direction) > 0.2):
-            theta_speed = 2
-        elif(abs(theta_direction) <= 0.2 and abs(theta_direction) > 0):
+        if theta_direction == 0.0:
+            theta_speed = 0.0
+        elif abs(theta_direction) > 0.2:
+            theta_speed = 2.0
+        elif abs(theta_direction) <= 0.2 and abs(theta_direction) > 0.0:
             theta_speed = 0.4
         new_theta = theta_speed if theta_direction >= 0 else -theta_speed
 
@@ -104,7 +104,7 @@ class _Command(object):
 class MoveTo(_Command):
     def __init__(self, player, position):
         # Parameters Assertion
-        assert(isinstance(position, Position))
+        assert isinstance(position, Position)
 
         super().__init__(player)
         self.pose.position = stayInsideSquare(position,
@@ -117,7 +117,7 @@ class MoveTo(_Command):
 
 class Rotate(_Command):
     def __init__(self, player, orientation):
-        assert(isinstance(orientation, (int, float)))
+        assert isinstance(orientation, (int, float))
 
         super().__init__(player)
         self.pose.orientation = orientation
@@ -130,7 +130,7 @@ class Rotate(_Command):
 
 class MoveToAndRotate(_Command):
     def __init__(self, player, pose):
-        assert(isinstance(pose, Pose))
+        assert isinstance(pose, Pose)
 
         super().__init__(player)
         position = stayInsideSquare(pose.position,
@@ -143,9 +143,9 @@ class MoveToAndRotate(_Command):
 
 class Kick(_Command):
     def __init__(self, player, kick_speed=5):
-        assert(isinstance(player, Player))
-        assert(isinstance(kick_speed, (int, float)))
-        assert(0 <= kick_speed <= 8)
+        assert isinstance(player, Player)
+        assert isinstance(kick_speed, (int, float))
+        assert 0 <= kick_speed <= 8
 
         super().__init__(player)
         self.kick = True
@@ -156,7 +156,7 @@ class Kick(_Command):
 
 class Stop(_Command):
     def __init__(self, player):
-        assert(isinstance(player, Player))
+        assert isinstance(player, Player)
 
         super().__init__(player)
         self.is_speed_command = True
