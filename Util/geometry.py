@@ -3,6 +3,7 @@ from ..Util.Position import Position
 from ..Game.Player import Player
 import math as m
 from .constant import *
+import sys
 
 __author__ = 'RoboCupULaval'
 
@@ -290,3 +291,49 @@ def get_required_kick_force(position1,position2): # simple calculation
 
     kick_force = distance * KICK_MAX_SPD / max_field_distance_possible
     return kick_force
+
+def player_in_the_way(info_manager, start_pos, end_pos, id_to_ignore):
+    for i in range(0,5):
+        suspect = info_manager.get_enemy_position(i)
+        if is_between_considering_radius(start_pos,end_pos,suspect):
+            return i, "enemy"
+
+    friends = [0,1,2,3,4,5]
+    friends.remove(id_to_ignore)
+
+    for i in friends:
+        suspect = info_manager.get_player_position(i)
+        if is_between_considering_radius(start_pos, end_pos, suspect):
+            return i, "friend"
+    return None
+
+def is_between_considering_radius(start_pos, end_pos, suspect):
+
+    # check vertical radius
+    modified_suspect = suspect
+    lower_bound = int(suspect.y) - BALL_RADIUS
+    upper_bound = int(suspect.y) + BALL_RADIUS
+
+    for i in range(lower_bound,upper_bound):
+
+        modified_suspect.y = i
+        distance_difference = get_distance(start_pos, modified_suspect) + \
+                              get_distance(modified_suspect, end_pos) - get_distance(start_pos, end_pos)
+        if distance_difference < 1 and distance_difference > -1:
+            return True
+
+    # check horizontal radius
+    modified_suspect = suspect
+    lower_bound = int(suspect.y) - BALL_RADIUS
+    upper_bound = int(suspect.y) + BALL_RADIUS
+
+    for i in range(lower_bound, upper_bound):
+
+        modified_suspect.x = i
+
+        distance_difference = get_distance(start_pos, modified_suspect) + \
+                              get_distance(modified_suspect,end_pos) - get_distance(start_pos, end_pos)
+        if distance_difference < 1 and distance_difference > -1:
+            return True
+
+    return False
