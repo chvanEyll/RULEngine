@@ -209,5 +209,4 @@ def player_grabbed_ball(info_manager, player_id):
 
         if angle_to_ball_is_tolerated(player_position, ball_position, target_position, ANGLE_TO_HALT):
             return True
-
     return False
